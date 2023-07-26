@@ -6,6 +6,18 @@ Each table is defined by its name, any table [arguments](../queries/arguments.md
 
 To describe a table, add a [`TableInfo`](../../reference/types.md#tableinfo) structure to the `tables` field of the schema response.
 
+## Table Arguments
+
+_TODO_
+
+## Relationships and Uniqueness Constraints
+
+_TODO_
+
+## Mutable Columns
+
+_TODO_
+
 ## Requirements
 
 - The `type` field should name an object type which is defined in the schema response.

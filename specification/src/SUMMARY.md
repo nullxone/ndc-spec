@@ -29,16 +29,13 @@
   - [Relationships](specification/queries/relationships.md)
   - [Variables](specification/queries/variables.md)
 - [Mutations](specification/mutations/README.md)
-  - [Insert](specification/mutations/insert.md)
-  - [Update](specification/mutations/update.md)
-  - [Delete](specification/mutations/delete.md)
-  - [Commands](specification/mutations/commands.md)
 - [Explain](specification/explain.md)
 
 # Tutorial
 
 - [Introduction](tutorial/README.md)
 - [Getting Started](tutorial/getting-started.md)
+- [Testing](tutorial/testing.md)
 - [Capabilities](tutorial/capabilities.md)
 - [Schema](tutorial/schema.md)
 - [Queries](tutorial/queries/README.md)
@@ -48,11 +45,6 @@
   - [Arguments](tutorial/queries/arguments.md)
   - [Variables](tutorial/queries/variables.md)
 - [Mutations](tutorial/mutations/README.md)
-  - [Insert](tutorial/mutations/insert/README.md)
-      - [Nested Inserts](tutorial/mutations/insert/nested-inserts.md)
-  - [Update](tutorial/mutations/update.md)
-  - [Delete](tutorial/mutations/delete.md)
-  - [Commands](tutorial/mutations/commands.md)
 
 # Reference
 
