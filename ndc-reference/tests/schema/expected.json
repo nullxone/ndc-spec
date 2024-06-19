@@ -347,6 +347,28 @@
           "name": "article"
         }
       }
+    },
+    {
+      "name": "levenshtein",
+      "description": "Compute Levenshtein distance",
+      "arguments": {
+        "left": {
+          "type": {
+            "type": "named",
+            "name": "String"
+          }
+        },
+        "right": {
+          "type": {
+            "type": "named",
+            "name": "String"
+          }
+        }
+      },
+      "result_type": {
+        "type": "named",
+        "name": "Int"
+      }
     }
   ],
   "procedures": [

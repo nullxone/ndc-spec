@@ -1,0 +1,87 @@
+{
+    "$schema": "../../../../ndc-models/tests/json_schema/query_request.jsonschema",
+    "collection": "articles",
+    "arguments": {},
+    "query": {
+        "fields": {
+            "title": {
+                "type": "column",
+                "arguments": {},
+                "column": "title"
+            },
+            "edit_distance_1": {
+                "type": "relationship",
+                "relationship": "levenshtein",
+                "arguments": {
+                    "right": {
+                        "type": "literal",
+                        "value": "Language"
+                    }
+                },
+                "query": {
+                    "fields": {
+                        "distance": {
+                            "type": "column",
+                            "arguments": {},
+                            "column": "__value"
+                        }
+                    }
+                }
+            },
+            "edit_distance_2": {
+                "type": "relationship",
+                "relationship": "levenshtein",
+                "arguments": {
+                    "right": {
+                        "type": "literal",
+                        "value": "Functional"
+                    }
+                },
+                "query": {
+                    "fields": {
+                        "distance": {
+                            "type": "column",
+                            "arguments": {},
+                            "column": "__value"
+                        }
+                    }
+                }
+            }
+        },
+        "order_by": {
+            "elements": [
+                {
+                    "order_direction": "asc",
+                    "target": {
+                        "type": "column",
+                        "name": "__value",
+                        "path": [
+                            {
+                                "relationship": "levenshtein",
+                                "arguments": {
+                                    "right": {
+                                        "type": "literal",
+                                        "value": "Functional"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "collection_relationships": {
+        "levenshtein": {
+            "arguments": {
+                "left": {
+                    "type": "column",
+                    "name": "title"
+                }
+            },
+            "target_collection": "levenshtein",
+            "column_mapping": {},
+            "relationship_type": "object"
+        }
+    }
+}

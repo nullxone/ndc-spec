@@ -1,0 +1,57 @@
+[
+  {
+    "rows": [
+      {
+        "title": "Why Functional Programming Matters",
+        "edit_distance_1": {
+          "rows": [
+            {
+              "distance": 29
+            }
+          ]
+        },
+        "edit_distance_2": {
+          "rows": [
+            {
+              "distance": 24
+            }
+          ]
+        }
+      },
+      {
+        "title": "The Next 700 Programming Languages",
+        "edit_distance_1": {
+          "rows": [
+            {
+              "distance": 26
+            }
+          ]
+        },
+        "edit_distance_2": {
+          "rows": [
+            {
+              "distance": 30
+            }
+          ]
+        }
+      },
+      {
+        "title": "The Design And Implementation Of Programming Languages",
+        "edit_distance_1": {
+          "rows": [
+            {
+              "distance": 46
+            }
+          ]
+        },
+        "edit_distance_2": {
+          "rows": [
+            {
+              "distance": 48
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

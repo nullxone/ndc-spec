@@ -659,9 +659,37 @@ async fn get_schema() -> Json<models::SchemaResponse> {
         arguments: BTreeMap::new(),
     };
     // ANCHOR_END: schema_function_latest_article
+    let levenshtein = models::FunctionInfo {
+        name: "levenshtein".into(),
+        description: Some("Compute Levenshtein distance".into()),
+        result_type: models::Type::Named { name: "Int".into() },
+        arguments: BTreeMap::from_iter(vec![
+            (
+                "left".into(),
+                models::ArgumentInfo {
+                    description: None,
+                    argument_type: models::Type::Named {
+                        name: "String".into(),
+                    },
+                },
+            ),
+            (
+                "right".into(),
+                models::ArgumentInfo {
+                    description: None,
+                    argument_type: models::Type::Named {
+                        name: "String".into(),
+                    },
+                },
+            ),
+        ]),
+    };
     // ANCHOR: schema_functions
-    let functions: Vec<models::FunctionInfo> =
-        vec![latest_article_id_function, latest_article_function];
+    let functions: Vec<models::FunctionInfo> = vec![
+        latest_article_id_function,
+        latest_article_function,
+        levenshtein,
+    ];
     // ANCHOR_END: schema_functions
     // ANCHOR: schema2
     Json(models::SchemaResponse {
@@ -852,6 +880,48 @@ fn get_collection_by_name(
             Ok(vec![BTreeMap::from_iter([(
                 "__value".into(),
                 latest_value,
+            )])])
+        }
+        "levenshtein" => {
+            let left = arguments
+                .get("left")
+                .ok_or((
+                    StatusCode::BAD_REQUEST,
+                    Json(models::ErrorResponse {
+                        message: "missing argument 'left'".into(),
+                        details: serde_json::Value::Null,
+                    }),
+                ))?
+                .as_str()
+                .ok_or((
+                    StatusCode::BAD_REQUEST,
+                    Json(models::ErrorResponse {
+                        message: "'left' must be a string".into(),
+                        details: serde_json::Value::Null,
+                    }),
+                ))?;
+
+            let right = arguments
+                .get("right")
+                .ok_or((
+                    StatusCode::BAD_REQUEST,
+                    Json(models::ErrorResponse {
+                        message: "missing argument 'right'".into(),
+                        details: serde_json::Value::Null,
+                    }),
+                ))?
+                .as_str()
+                .ok_or((
+                    StatusCode::BAD_REQUEST,
+                    Json(models::ErrorResponse {
+                        message: "'right' must be a string".into(),
+                        details: serde_json::Value::Null,
+                    }),
+                ))?;
+
+            Ok(vec![BTreeMap::from_iter([(
+                "__value".into(),
+                serde_json::Value::Number(levenshtein::levenshtein(left, right).into()),
             )])])
         }
         _ => Err((
