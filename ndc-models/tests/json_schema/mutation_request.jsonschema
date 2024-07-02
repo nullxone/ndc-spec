@@ -105,6 +105,15 @@
             },
             "fields": {
               "$ref": "#/definitions/NestedField"
+            },
+            "aggregates": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "$ref": "#/definitions/Aggregate"
+              }
             }
           }
         }

@@ -2,12 +2,14 @@
   "operation_results": [
     {
       "type": "procedure",
-      "result": [
-        {
-          "id": 1,
-          "title": "The Next 700 Programming Languages"
-        }
-      ]
+      "result": {
+        "rows": [
+          {
+            "id": 1,
+            "title": "The Next 700 Programming Languages"
+          }
+        ]
+      }
     }
   ]
 }

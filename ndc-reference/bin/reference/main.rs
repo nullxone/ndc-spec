@@ -28,7 +28,7 @@ const AUTHORS_JSON: &str = include_str!("../../authors.json");
 const INSTITUTIONS_JSON: &str = include_str!("../../institutions.json");
 
 // ANCHOR: row-type
-type Row = BTreeMap<models::FieldName, serde_json::Value>;
+type Row = IndexMap<models::FieldName, serde_json::Value>;
 // ANCHOR_END: row-type
 // ANCHOR: app-state
 #[derive(Debug, Clone)]
@@ -44,7 +44,7 @@ pub struct AppState {
 fn read_json_lines(contents: &str) -> core::result::Result<BTreeMap<i32, Row>, Box<dyn Error>> {
     let mut records: BTreeMap<i32, Row> = BTreeMap::new();
     for line in contents.lines() {
-        let row: BTreeMap<models::FieldName, serde_json::Value> = serde_json::from_str(line)?;
+        let row: Row = serde_json::from_str(line)?;
         let id: i32 = row
             .get(&models::FieldName::new("id".into()))
             .ok_or("'id' field not found in json file")?
@@ -856,7 +856,7 @@ fn get_collection_by_name(
                     }),
                 )
             })?;
-            Ok(vec![BTreeMap::from_iter([(
+            Ok(vec![IndexMap::from_iter([(
                 "__value".into(),
                 latest_id_value,
             )])])
@@ -876,7 +876,7 @@ fn get_collection_by_name(
                     }),
                 )
             })?;
-            Ok(vec![BTreeMap::from_iter([(
+            Ok(vec![IndexMap::from_iter([(
                 "__value".into(),
                 latest_value,
             )])])
@@ -1291,7 +1291,7 @@ fn eval_row(
     collection_relationships: &BTreeMap<models::RelationshipName, models::Relationship>,
     variables: &BTreeMap<models::VariableName, serde_json::Value>,
     state: &AppState,
-    item: &BTreeMap<models::FieldName, serde_json::Value>,
+    item: &Row,
 ) -> Result<IndexMap<models::FieldName, models::RowFieldValue>> {
     let mut row = IndexMap::new();
     for (field_name, field) in fields {
@@ -2207,7 +2207,7 @@ fn eval_nested_field(
                 },
             )?))
         }
-        models::NestedField::Array(models::NestedArray { fields }) => {
+        models::NestedField::Array(models::NestedArray { fields, aggregates }) => {
             let array: Vec<serde_json::Value> = serde_json::from_value(value).map_err(|_| {
                 (
                     StatusCode::BAD_REQUEST,
@@ -2230,17 +2230,56 @@ fn eval_nested_field(
                     )
                 })
                 .collect::<Result<Vec<_>>>()?;
-            Ok(models::RowFieldValue(
-                serde_json::to_value(result_array).map_err(|_| {
+            let rows = result_array
+                .into_iter()
+                .map(|o| {
+                    Ok(serde_json::from_value::<Row>(o.0)
+                        .map_err(|_| {
+                            (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                Json(models::ErrorResponse {
+                                    message: "cannot decode row".into(),
+                                    details: serde_json::Value::Null,
+                                }),
+                            )
+                        })?
+                        .into())
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let aggregates = aggregates
+                .as_ref()
+                .map(|aggregates| {
+                    let mut row: IndexMap<models::FieldName, serde_json::Value> = IndexMap::new();
+                    for (aggregate_name, aggregate) in aggregates {
+                        row.insert(aggregate_name.clone(), eval_aggregate(aggregate, &rows)?);
+                    }
+                    Ok(row)
+                })
+                .transpose()?;
+            let rowset = models::RowSet {
+                groups: None,
+                aggregates,
+                rows: Some(
+                    rows.iter()
+                        .map(|o| {
+                            o.into_iter()
+                                .map(|x| (x.0.clone(), models::RowFieldValue(x.1.clone())))
+                                .collect()
+                        })
+                        .collect(),
+                ),
+            };
+            Ok(models::RowFieldValue(serde_json::to_value(rowset).map_err(
+                |_| {
                     (
                         StatusCode::INTERNAL_SERVER_ERROR,
                         Json(models::ErrorResponse {
-                            message: "Cannot encode rowset".into(),
+                            message: "cannot encode rowset".into(),
                             details: serde_json::Value::Null,
                         }),
                     )
-                })?,
-            ))
+                },
+            )?))
         }
     }
 }

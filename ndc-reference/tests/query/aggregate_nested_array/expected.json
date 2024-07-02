@@ -1,0 +1,38 @@
+[
+  {
+    "rows": [
+      {
+        "id": 1,
+        "staff": {
+          "aggregates": {
+            "count": 1
+          },
+          "rows": [
+            {
+              "last_name": "Landin",
+              "first_name": "Peter"
+            }
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "staff": {
+          "aggregates": {
+            "count": 2
+          },
+          "rows": [
+            {
+              "last_name": "Hughes",
+              "first_name": "John"
+            },
+            {
+              "last_name": "Claessen",
+              "first_name": "Koen"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

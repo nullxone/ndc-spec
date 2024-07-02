@@ -676,6 +676,7 @@ pub struct NestedObject {
 #[schemars(title = "NestedArray")]
 pub struct NestedArray {
     pub fields: Box<NestedField>,
+    pub aggregates: Option<IndexMap<FieldName, Aggregate>>,
 }
 // ANCHOR_END: NestedArray
 
