@@ -96,6 +96,17 @@
               "$ref": "#/definitions/ExistsCapabilities"
             }
           ]
+        },
+        "offset": {
+          "description": "Does the connector support pagination via offsets",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LeafCapability"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },

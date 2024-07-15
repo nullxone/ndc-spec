@@ -70,6 +70,8 @@ pub struct QueryCapabilities {
     /// Does the connector support EXISTS predicates
     #[serde(default)]
     pub exists: ExistsCapabilities,
+    /// Does the connector support pagination via offsets
+    pub offset: Option<LeafCapability>, 
 }
 // ANCHOR_END: QueryCapabilities
 
@@ -186,6 +188,9 @@ pub struct ScalarType {
     pub aggregate_functions: BTreeMap<AggregateFunctionName, AggregateFunctionDefinition>,
     /// A map from comparison operator names to their definitions. Argument type names must be defined scalar types declared in ScalarTypesCapabilities.
     pub comparison_operators: BTreeMap<ComparisonOperatorName, ComparisonOperatorDefinition>,
+    /// Does the connector support ordering by values of this type
+    #[serde(default)]
+    pub orderable: bool,
 }
 // ANCHOR_END: ScalarType
 
@@ -317,7 +322,18 @@ pub enum Type {
 #[schemars(title = "Comparison Operator Definition")]
 pub enum ComparisonOperatorDefinition {
     Equal,
+    NotEqual,
     In,
+    NotIn,
+    LessThan,
+    LessThanOrEqualTo,
+    GreaterThan,
+    GreaterThanOrEqualTo,
+    IsDistinctFrom,
+    IsNotDistinctFrom,
+    RegexMatch,
+    RegexCaseInsensitiveMatch,
+    LikeMatch,
     Custom {
         /// The type of the argument to this operator
         argument_type: Type,
@@ -332,8 +348,32 @@ pub enum ComparisonOperatorDefinition {
 pub struct AggregateFunctionDefinition {
     /// The scalar or object type of the result of this function
     pub result_type: Type,
+    /// A description of valid values for this scalar type.
+    pub meaning: Option<AggregateFunctionMeaning>,
 }
 // ANCHOR_END: AggregateFunctionDefinition
+
+// ANCHOR: AggregateFunctionMeaning
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "type", rename_all = "snake_case")]
+#[schemars(title = "Aggregate Function Definition")]
+pub enum AggregateFunctionMeaning {
+    ArrayAgg,
+    Average,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    BoolAnd,
+    BoolOr,
+    FirstValue,
+    LastValue,
+    Max,
+    Mean,
+    Median,
+    Min,
+    Sum,
+}
+// ANCHOR_END: AggregateFunctionMeaning
 
 // ANCHOR: CollectionInfo
 #[skip_serializing_none]
@@ -356,6 +396,9 @@ pub struct CollectionInfo {
     pub uniqueness_constraints: BTreeMap<String, UniquenessConstraint>,
     /// Any foreign key constraints enforced on this collection
     pub foreign_keys: BTreeMap<String, ForeignKeyConstraint>,
+    /// The maximum page size which can be requested via the limit field,
+    /// or null meaning no maximum.
+    pub maximum_page_size: Option<usize>,
 }
 // ANCHOR_END: CollectionInfo
 

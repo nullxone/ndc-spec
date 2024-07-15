@@ -20,7 +20,8 @@
       "exists": {
         "named_scopes": {},
         "unrelated": {}
-      }
+      },
+      "offset": {}
     },
     "mutation": {},
     "relationships": {

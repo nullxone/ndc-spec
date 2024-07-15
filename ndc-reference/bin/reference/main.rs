@@ -235,6 +235,7 @@ async fn get_capabilities() -> Json<models::CapabilitiesResponse> {
                     aggregates: Some(models::LeafCapability {}),
                     nested_collections: Some(models::LeafCapability {}),
                 },
+                offset: Some(models::LeafCapability {}),
             },
             mutation: models::MutationCapabilities {
                 transactional: None,
@@ -267,6 +268,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
         (
             "String".into(),
             models::ScalarType {
+                orderable: true,
                 representation: Some(models::TypeRepresentation::String),
                 aggregate_functions: BTreeMap::new(),
                 comparison_operators: BTreeMap::from_iter([
@@ -286,11 +288,13 @@ async fn get_schema() -> Json<models::SchemaResponse> {
         (
             "Int".into(),
             models::ScalarType {
+                orderable: true,
                 representation: Some(models::TypeRepresentation::Int32),
                 aggregate_functions: BTreeMap::from_iter([
                     (
                         "max".into(),
                         models::AggregateFunctionDefinition {
+                            meaning: Some(ndc_models::AggregateFunctionMeaning::Max),
                             result_type: models::Type::Nullable {
                                 underlying_type: Box::new(models::Type::Named {
                                     name: "Int".into(),
@@ -301,6 +305,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
                     (
                         "min".into(),
                         models::AggregateFunctionDefinition {
+                            meaning: Some(ndc_models::AggregateFunctionMeaning::Min),
                             result_type: models::Type::Nullable {
                                 underlying_type: Box::new(models::Type::Named {
                                     name: "Int".into(),
@@ -550,6 +555,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
                 unique_columns: vec!["id".into()],
             },
         )]),
+        maximum_page_size: None,
     };
     // ANCHOR_END: schema_collection_article
     // ANCHOR: schema_collection_author
@@ -565,6 +571,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
                 unique_columns: vec!["id".into()],
             },
         )]),
+        maximum_page_size: None,
     };
     // ANCHOR_END: schema_collection_author
     // ANCHOR: schema_collection_institution
@@ -580,6 +587,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
                 unique_columns: vec!["id".into()],
             },
         )]),
+        maximum_page_size: None,
     };
     // ANCHOR_END: schema_collection_institution
     // ANCHOR: schema_collection_articles_by_author
@@ -596,6 +604,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
         )]),
         foreign_keys: BTreeMap::new(),
         uniqueness_constraints: BTreeMap::new(),
+        maximum_page_size: None,
     };
     // ANCHOR_END: schema_collection_articles_by_author
     // ANCHOR: schema_collections
