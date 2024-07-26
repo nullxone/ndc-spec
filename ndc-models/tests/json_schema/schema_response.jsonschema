@@ -659,8 +659,125 @@
               "$ref": "#/definitions/Type"
             }
           ]
+        },
+        "meaning": {
+          "description": "An optional hint describing how this argument operates on the result",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ArgumentMeaning"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
+    },
+    "ArgumentMeaning": {
+      "title": "Argument",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "column",
+            "operator",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "filter_like"
+              ]
+            },
+            "column": {
+              "type": "string"
+            },
+            "operator": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "allowed_columns",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "order_by_column"
+              ]
+            },
+            "allowed_columns": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "asc_label",
+            "desc_label",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "order_by_direction"
+              ]
+            },
+            "asc_label": {
+              "type": "string"
+            },
+            "desc_label": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "limit_like"
+              ]
+            },
+            "maximum_value": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "offset_like"
+              ]
+            }
+          }
+        }
+      ]
     },
     "CollectionInfo": {
       "title": "Collection Info",

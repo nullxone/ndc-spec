@@ -128,6 +128,10 @@
                   "type": "named",
                   "name": "Int"
                 }
+              },
+              "meaning": {
+                "type": "limit_like",
+                "maximum_value": null
               }
             }
           }
@@ -170,6 +174,10 @@
                   "type": "named",
                   "name": "Int"
                 }
+              },
+              "meaning": {
+                "type": "limit_like",
+                "maximum_value": null
               }
             }
           }
@@ -196,6 +204,10 @@
                   "type": "named",
                   "name": "Int"
                 }
+              },
+              "meaning": {
+                "type": "limit_like",
+                "maximum_value": null
               }
             }
           }
@@ -250,6 +262,10 @@
                   "type": "named",
                   "name": "Int"
                 }
+              },
+              "meaning": {
+                "type": "limit_like",
+                "maximum_value": null
               }
             }
           }
@@ -315,6 +331,11 @@
           "type": {
             "type": "named",
             "name": "Int"
+          },
+          "meaning": {
+            "type": "filter_like",
+            "column": "author_id",
+            "operator": "eq"
           }
         }
       },
@@ -343,6 +364,93 @@
       "result_type": {
         "type": "nullable",
         "underlying_type": {
+          "type": "named",
+          "name": "article"
+        }
+      }
+    },
+    {
+      "name": "get_articles",
+      "description": "Get articles API example",
+      "arguments": {
+        "author_id": {
+          "description": "",
+          "type": {
+            "type": "nullable",
+            "underlying_type": {
+              "type": "named",
+              "name": "Int"
+            }
+          },
+          "meaning": {
+            "type": "filter_like",
+            "column": "author_id",
+            "operator": "eq"
+          }
+        },
+        "limit": {
+          "description": "",
+          "type": {
+            "type": "nullable",
+            "underlying_type": {
+              "type": "named",
+              "name": "Int"
+            }
+          },
+          "meaning": {
+            "type": "limit_like",
+            "maximum_value": 100
+          }
+        },
+        "sort_by": {
+          "description": "",
+          "type": {
+            "type": "nullable",
+            "underlying_type": {
+              "type": "named",
+              "name": "String"
+            }
+          },
+          "meaning": {
+            "type": "order_by_column",
+            "allowed_columns": {
+              "id": "id",
+              "title": "title"
+            }
+          }
+        },
+        "sort_direction": {
+          "description": "",
+          "type": {
+            "type": "nullable",
+            "underlying_type": {
+              "type": "named",
+              "name": "String"
+            }
+          },
+          "meaning": {
+            "type": "order_by_direction",
+            "asc_label": "asc",
+            "desc_label": "desc"
+          }
+        },
+        "start_at": {
+          "description": "",
+          "type": {
+            "type": "nullable",
+            "underlying_type": {
+              "type": "named",
+              "name": "Int"
+            }
+          },
+          "meaning": {
+            "type": "offset_like"
+          }
+        }
+      },
+      "result_type": {
+        "type": "array",
+        "element_type": {
           "type": "named",
           "name": "article"
         }

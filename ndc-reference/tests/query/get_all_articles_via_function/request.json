@@ -1,0 +1,38 @@
+{
+    "collection": "get_articles",
+    "arguments": {
+        "author_id": {
+            "type": "literal",
+            "value": 2
+        },
+        "sort_by": {
+            "type": "literal",
+            "value": "title"
+        },
+        "sort_direction": {
+            "type": "literal",
+            "value": "desc"
+        },
+        "limit": {
+            "type": "literal",
+            "value": 1
+        },
+        "start_at": {
+            "type": "literal",
+            "value": null
+        }
+    },
+    "query": {
+        "fields": {
+            "id": {
+                "type": "column",
+                "column": "id"
+            },
+            "title": {
+                "type": "column",
+                "column": "title"
+            }
+        }
+    },
+    "collection_relationships": {}
+}

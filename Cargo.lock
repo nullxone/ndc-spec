@@ -865,6 +865,7 @@ dependencies = [
  "ndc-test",
  "prometheus",
  "regex",
+ "serde",
  "serde_json",
  "tokio",
  "tokio-test",

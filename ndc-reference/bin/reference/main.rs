@@ -245,6 +245,9 @@ async fn get_schema() -> Json<models::SchemaResponse> {
             argument_type: models::Type::Nullable {
                 underlying_type: Box::new(models::Type::Named { name: "Int".into() }),
             },
+            meaning: Some(ndc_models::ArgumentMeaning::LimitLike {
+                maximum_value: None,
+            }),
         },
     )]
     .into_iter()
@@ -579,6 +582,10 @@ async fn get_schema() -> Json<models::SchemaResponse> {
             models::ArgumentInfo {
                 argument_type: models::Type::Named { name: "Int".into() },
                 description: None,
+                meaning: Some(ndc_models::ArgumentMeaning::FilterLike {
+                    column: ndc_models::FieldName::from("author_id"),
+                    operator: ndc_models::ComparisonOperatorName::from("eq"),
+                }),
             },
         )]),
         foreign_keys: BTreeMap::new(),
@@ -604,6 +611,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
                 argument_type: models::Type::Named {
                     name: "article".into(),
                 },
+                meaning: None,
             },
         )]),
         result_type: models::Type::Nullable {
@@ -624,6 +632,7 @@ async fn get_schema() -> Json<models::SchemaResponse> {
                 argument_type: models::Type::Predicate {
                     object_type_name: "article".into(),
                 },
+                meaning: None,
             },
         )]),
         result_type: models::Type::Array {
@@ -658,9 +667,98 @@ async fn get_schema() -> Json<models::SchemaResponse> {
         arguments: BTreeMap::new(),
     };
     // ANCHOR_END: schema_function_latest_article
+    // ANCHOR: schema_function_get_articles_function
+    let get_articles_function = models::FunctionInfo {
+        name: "get_articles".into(),
+        description: Some("Get articles API example".into()),
+        result_type: models::Type::Array {
+            element_type: Box::new(models::Type::Named {
+                name: "article".into(),
+            }),
+        },
+        arguments: BTreeMap::from_iter([
+            (
+                "author_id".into(),
+                models::ArgumentInfo {
+                    description: Some("".into()),
+                    argument_type: models::Type::Nullable {
+                        underlying_type: Box::new(models::Type::Named {
+                            name: ndc_models::TypeName::from("Int"),
+                        }),
+                    },
+                    meaning: Some(ndc_models::ArgumentMeaning::FilterLike {
+                        column: ndc_models::FieldName::from("author_id"),
+                        operator: ndc_models::ComparisonOperatorName::from("eq"),
+                    }),
+                },
+            ),
+            (
+                "sort_by".into(),
+                models::ArgumentInfo {
+                    description: Some("".into()),
+                    argument_type: models::Type::Nullable {
+                        underlying_type: Box::new(models::Type::Named {
+                            name: ndc_models::TypeName::from("String"),
+                        }),
+                    },
+                    meaning: Some(ndc_models::ArgumentMeaning::OrderByColumn {
+                        allowed_columns: BTreeMap::from_iter([
+                            ("id".into(), ndc_models::FieldName::from("id")),
+                            ("title".into(), ndc_models::FieldName::from("title")),
+                        ]),
+                    }),
+                },
+            ),
+            (
+                "sort_direction".into(),
+                models::ArgumentInfo {
+                    description: Some("".into()),
+                    argument_type: models::Type::Nullable {
+                        underlying_type: Box::new(models::Type::Named {
+                            name: ndc_models::TypeName::from("String"),
+                        }),
+                    },
+                    meaning: Some(ndc_models::ArgumentMeaning::OrderByDirection {
+                        asc_label: "asc".into(),
+                        desc_label: "desc".into(),
+                    }),
+                },
+            ),
+            (
+                "limit".into(),
+                models::ArgumentInfo {
+                    description: Some("".into()),
+                    argument_type: models::Type::Nullable {
+                        underlying_type: Box::new(models::Type::Named {
+                            name: ndc_models::TypeName::from("Int"),
+                        }),
+                    },
+                    meaning: Some(ndc_models::ArgumentMeaning::LimitLike {
+                        maximum_value: Some(100),
+                    }),
+                },
+            ),
+            (
+                "start_at".into(),
+                models::ArgumentInfo {
+                    description: Some("".into()),
+                    argument_type: models::Type::Nullable {
+                        underlying_type: Box::new(models::Type::Named {
+                            name: ndc_models::TypeName::from("Int"),
+                        }),
+                    },
+                    meaning: Some(ndc_models::ArgumentMeaning::OffsetLike {}),
+                },
+            ),
+        ]),
+    };
+    // ANCHOR_END: schema_function_get_articles_function
     // ANCHOR: schema_functions
-    let functions: Vec<models::FunctionInfo> =
-        vec![latest_article_id_function, latest_article_function];
+    let functions: Vec<models::FunctionInfo> = vec![
+        latest_article_id_function,
+        latest_article_function,
+        get_articles_function,
+    ];
     // ANCHOR_END: schema_functions
     // ANCHOR: schema2
     Json(models::SchemaResponse {
@@ -711,8 +809,25 @@ fn execute_query_with_variables(
     state: &AppState,
 ) -> Result<models::RowSet> {
     // ANCHOR_END: execute_query_with_variables_signature
-    let mut argument_values = BTreeMap::new();
+    let argument_values = eval_arguments(arguments, variables)?;
 
+    let collection = get_collection_by_name(collection, &argument_values, state)?;
+
+    execute_query(
+        collection_relationships,
+        variables,
+        state,
+        query,
+        Root::CurrentRow,
+        collection,
+    )
+}
+
+fn eval_arguments(
+    arguments: &BTreeMap<ndc_models::ArgumentName, ndc_models::Argument>,
+    variables: &BTreeMap<ndc_models::VariableName, serde_json::Value>,
+) -> Result<BTreeMap<ndc_models::ArgumentName, serde_json::Value>> {
+    let mut argument_values = BTreeMap::new();
     for (argument_name, argument_value) in arguments {
         if argument_values
             .insert(
@@ -730,17 +845,7 @@ fn execute_query_with_variables(
             ));
         }
     }
-
-    let collection = get_collection_by_name(collection, &argument_values, state)?;
-
-    execute_query(
-        collection_relationships,
-        variables,
-        state,
-        query,
-        Root::CurrentRow,
-        collection,
-    )
+    Ok(argument_values)
 }
 // ANCHOR_END: execute_query_with_variables
 // ANCHOR: get_collection_by_name
@@ -754,32 +859,8 @@ fn get_collection_by_name(
         "authors" => Ok(state.authors.values().cloned().collect()),
         "institutions" => Ok(state.institutions.values().cloned().collect()),
         "articles_by_author" => {
-            let author_id = arguments.get("author_id").ok_or((
-                StatusCode::BAD_REQUEST,
-                Json(models::ErrorResponse {
-                    message: "missing argument author_id".into(),
-                    details: serde_json::Value::Null,
-                }),
-            ))?;
-            let author_id_int: i32 = author_id
-                .as_i64()
-                .ok_or((
-                    StatusCode::BAD_REQUEST,
-                    Json(models::ErrorResponse {
-                        message: "author_id must be an integer".into(),
-                        details: serde_json::Value::Null,
-                    }),
-                ))?
-                .try_into()
-                .map_err(|_| {
-                    (
-                        StatusCode::BAD_REQUEST,
-                        Json(models::ErrorResponse {
-                            message: "author_id out of range".into(),
-                            details: serde_json::Value::Null,
-                        }),
-                    )
-                })?;
+            let author_id_int =
+                parse_argument::<i32>(arguments, models::ArgumentName::from("author_id"))?;
 
             let mut articles_by_author = vec![];
 
@@ -853,6 +934,87 @@ fn get_collection_by_name(
                 latest_value,
             )])])
         }
+        "get_articles" => {
+            let author_id: Option<u32> =
+                parse_argument(arguments, models::ArgumentName::from("author_id"))?;
+            let sort_by: Option<String> =
+                parse_argument(arguments, models::ArgumentName::from("sort_by"))?;
+            let sort_direction: Option<String> =
+                parse_argument(arguments, models::ArgumentName::from("sort_direction"))?;
+            let limit: Option<u32> =
+                parse_argument(arguments, models::ArgumentName::from("limit"))?;
+            let start_at: Option<u32> =
+                parse_argument(arguments, models::ArgumentName::from("start_at"))?;
+
+            let query = models::Query {
+                aggregates: None,
+                fields: Some(IndexMap::from_iter(["id", "title", "author_id"].map(
+                    |name| {
+                        (
+                            models::FieldName::from(name),
+                            models::Field::Column {
+                                column: models::FieldName::from(name),
+                                fields: None,
+                                arguments: BTreeMap::new(),
+                            },
+                        )
+                    },
+                ))),
+                limit: limit,
+                offset: start_at,
+                predicate: author_id.map(|author_id| {
+                    models::Expression::BinaryComparisonOperator {
+                        column: models::ComparisonTarget::Column {
+                            name: models::FieldName::from("author_id"),
+                            field_path: None,
+                            path: vec![],
+                        },
+                        operator: models::ComparisonOperatorName::from("eq"),
+                        value: models::ComparisonValue::Scalar {
+                            value: serde_json::Value::from(author_id),
+                        },
+                    }
+                }),
+                order_by: sort_by
+                    .zip(sort_direction)
+                    .map(|(column, direction)| models::OrderBy {
+                        elements: vec![models::OrderByElement {
+                            order_direction: match direction.as_str() {
+                                "asc" => models::OrderDirection::Asc,
+                                "desc" => models::OrderDirection::Desc,
+                                _ => panic!(),
+                            },
+                            target: models::OrderByTarget::Column {
+                                name: models::FieldName::from(column),
+                                field_path: None,
+                                path: vec![],
+                            },
+                        }],
+                    }),
+            };
+
+            let row_set = execute_query(
+                &BTreeMap::new(),
+                &BTreeMap::new(),
+                state,
+                &query,
+                Root::CurrentRow,
+                state.articles.values().cloned().collect(),
+            )?;
+
+            let rows = row_set.rows.ok_or((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(models::ErrorResponse {
+                    message: "error executing internal query".into(),
+                    details: serde_json::Value::Null,
+                }),
+            ))?;
+
+            Ok(rows
+                .into_iter()
+                .map(|row| BTreeMap::from_iter(row.into_iter().map(|(x, y)| (x, y.0))))
+                .collect())
+        }
         _ => Err((
             StatusCode::BAD_REQUEST,
             Json(models::ErrorResponse {
@@ -861,6 +1023,28 @@ fn get_collection_by_name(
             }),
         )),
     }
+}
+
+fn parse_argument<T: serde::de::DeserializeOwned>(
+    arguments: &BTreeMap<ndc_models::ArgumentName, serde_json::Value>,
+    name: models::ArgumentName,
+) -> Result<T> {
+    let value = arguments.get(&name).ok_or((
+        StatusCode::BAD_REQUEST,
+        Json(models::ErrorResponse {
+            message: format!("missing argument {}", name).into(),
+            details: serde_json::Value::Null,
+        }),
+    ))?;
+    serde_json::from_value(value.clone()).map_err(|_| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(models::ErrorResponse {
+                message: format!("{} has the wrong format", name).into(),
+                details: serde_json::Value::Null,
+            }),
+        )
+    })
 }
 // ANCHOR_END: get_collection_by_name
 /// ANCHOR: Root
@@ -1815,24 +1999,9 @@ fn eval_column(
     ))?;
 
     if let Some(array) = column.as_array() {
-        let limit_argument = arguments.get("limit").ok_or((
-            StatusCode::BAD_REQUEST,
-            Json(models::ErrorResponse {
-                message: format!("Expected argument 'limit' in column {column_name}"),
-                details: serde_json::Value::Null,
-            }),
-        ))?;
+        let arguments = eval_arguments(arguments, variables)?;
         let limit =
-            serde_json::from_value::<Option<usize>>(eval_argument(variables, limit_argument)?)
-                .map_err(|_| {
-                    (
-                        StatusCode::BAD_REQUEST,
-                        Json(models::ErrorResponse {
-                            message: "limit must be null or an integer".into(),
-                            details: serde_json::Value::Null,
-                        }),
-                    )
-                })?;
+            parse_argument::<Option<usize>>(&arguments, models::ArgumentName::from("limit"))?;
 
         let result_array = array[0..limit.unwrap_or(array.len())].to_vec();
 
@@ -2133,23 +2302,8 @@ fn execute_upsert_article(
     collection_relationships: &BTreeMap<models::RelationshipName, models::Relationship>,
 ) -> std::result::Result<models::MutationOperationResults, (StatusCode, Json<models::ErrorResponse>)>
 {
-    let article = arguments.get("article").ok_or((
-        StatusCode::BAD_REQUEST,
-        Json(models::ErrorResponse {
-            message: "Expected argument 'article'".into(),
-            details: serde_json::Value::Null,
-        }),
-    ))?;
-    let article_obj: Row = serde_json::from_value(article.clone()).map_err(|_| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(models::ErrorResponse {
-                message: "article must be an object".into(),
-                details: serde_json::Value::Null,
-            }),
-        )
-    })?;
-    let id = article_obj.get("id").ok_or((
+    let article: Row = parse_argument(arguments, models::ArgumentName::from("article"))?;
+    let id = article.get("id").ok_or((
         StatusCode::BAD_REQUEST,
         Json(models::ErrorResponse {
             message: "article missing field 'id'".into(),
@@ -2175,7 +2329,7 @@ fn execute_upsert_article(
                 }),
             )
         })?;
-    let old_row = state.articles.insert(id_int, article_obj);
+    let old_row = state.articles.insert(id_int, article);
 
     Ok(models::MutationOperationResults::Procedure {
         result: old_row.map_or(Ok(serde_json::Value::Null), |old_row| {
@@ -2213,23 +2367,7 @@ fn execute_delete_articles(
     collection_relationships: &BTreeMap<models::RelationshipName, models::Relationship>,
 ) -> std::result::Result<models::MutationOperationResults, (StatusCode, Json<models::ErrorResponse>)>
 {
-    let predicate_value = arguments.get("where").ok_or((
-        StatusCode::BAD_REQUEST,
-        Json(models::ErrorResponse {
-            message: "Expected argument 'where'".into(),
-            details: serde_json::Value::Null,
-        }),
-    ))?;
-    let predicate: models::Expression =
-        serde_json::from_value(predicate_value.clone()).map_err(|_| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(models::ErrorResponse {
-                    message: "Bad predicate".into(),
-                    details: serde_json::Value::Null,
-                }),
-            )
-        })?;
+    let predicate = parse_argument(arguments, models::ArgumentName::from("where"))?;
 
     let mut removed: Vec<Row> = vec![];
 

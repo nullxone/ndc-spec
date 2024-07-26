@@ -338,8 +338,34 @@ pub struct ArgumentInfo {
     /// The name of the type of this argument
     #[serde(rename = "type")]
     pub argument_type: Type,
+    /// An optional hint describing how this argument operates on the result
+    pub meaning: Option<ArgumentMeaning>,
 }
 // ANCHOR_END: ArgumentInfo
+
+// ANCHOR: ArgumentMeaning
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "type", rename_all = "snake_case")]
+#[schemars(title = "Argument")]
+pub enum ArgumentMeaning {
+    FilterLike {
+        column: FieldName,
+        // field_path: Vec<FieldName>,
+        operator: ComparisonOperatorName,
+    },
+    OrderByColumn {
+        allowed_columns: BTreeMap<String, FieldName>
+    },
+    OrderByDirection {
+        asc_label: String,
+        desc_label: String,
+    },
+    LimitLike {
+        maximum_value: Option<u32>,
+    },
+    OffsetLike {}
+}
+// ANCHOR_END: ArgumentMeaning
 
 // ANCHOR: UniquenessConstraint
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
